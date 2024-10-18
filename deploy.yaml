@@ -1,0 +1,37 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        project_id: YOUR_PROJECT_ID
+        service_account_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
+
+    - name: Authenticate Docker
+      run: gcloud auth configure-docker
+
+    - name: Build Docker image
+      run: docker build -t gcr.io/YOUR_PROJECT_ID/php-sample-app .
+
+    - name: Push Docker image to GCR
+      run: docker push gcr.io/YOUR_PROJECT_ID/php-sample-app
+
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy php-sample-app \
+        --image gcr.io/YOUR_PROJECT_ID/php-sample-app \
+        --platform managed \
+        --region YOUR_REGION \
+        --allow-unauthenticated
